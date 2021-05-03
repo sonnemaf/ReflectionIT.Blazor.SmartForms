@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/sonnemaf/ReflectionIT.Blazor.SmartForms</PackageProjectUrl>
+    <Authors>Fons Sonnemans</Authors>
+    <Company>Reflection IT</Company>
+    <Description>Smart Forms using Bootstrap and DataAnnotations</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/sonnemaf/ReflectionIT.Blazor.Paging</RepositoryUrl>
+    <PackageTags>csharp web-api bootstrap4 asp-net-core blazor-webassembly</PackageTags>
+    <PackageReleaseNotes>Initial version</PackageReleaseNotes>
   </PropertyGroup>
 
   
@@ -15,6 +24,13 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
