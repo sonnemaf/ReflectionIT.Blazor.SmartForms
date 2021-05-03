@@ -1,0 +1,48 @@
+﻿@page "/product"
+@using SampleApp.Models
+
+<h1>Product</h1>
+
+<EditForm Model="@product" TItem="Product" OnValidSubmit="HandleValidSubmit"
+          novalidate>
+
+    <DataAnnotationsValidator />
+
+    <SmartInput For="(() => product.Name)"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                @bind-Value="product.Name"
+                placeholder="Enter the name" />
+
+    <SmartInput Id="up"
+                Prefix="$"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                For="(() => product.UnitPrice)"
+                @bind-Value="product.UnitPrice" />
+
+    <SmartInput For="(() => product.UnitsInStock)"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                DisplayValidationMessage="false"
+                @bind-Value="product.UnitsInStock" />
+
+    <SmartEnumSelect For="(() => product.Status)"
+                     LabelColumnSizeMedium="4"
+                     LabelColumSizeLarge="3"
+                     @bind-Value="product.Status" />
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
+
+<h3>@text</h3>
+
+@code {
+    private Product product = new();
+    private string text;
+
+    private void HandleValidSubmit(EditContext editContext)
+    {
+        text = $"Product Name: {product.Name} UnitPrice: {product.UnitPrice:C} UnitsInStock: {product.UnitsInStock}";
+    }
+}
