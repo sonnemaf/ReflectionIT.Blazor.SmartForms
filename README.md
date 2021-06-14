@@ -8,7 +8,7 @@ Information on what's contained within this package will be coming soon. Please 
 
 | Package | Version |
 | ------ | ------ |
-| ReflectionIT.Blazor.SmartForms | [![NuGet](https://img.shields.io/nuget/v/Reflectionit.Blazor.SmartForms)](https://www.nuget.org/packages/ReflectionIT.Blazor.SmartForms/) |
+| ReflectionIT.Blazor.SmartForms | [![NuGet](https://img.shields.io/nuget/v/ReflectionIT.Blazor.SmartForms)](https://www.nuget.org/packages/ReflectionIT.Blazor.SmartForms/) |
 
 ## <a id="contributing">Contributing</a>
 Everyone is welcome to contribute. If you find an issue, please could you raise it in the [issues](https://github.com/sonnemaf/ReflectionIT.Blazor.Paging/issues) section or it would be fantastic if you could have a look at rectifying the issue and submitting a pull request. 
