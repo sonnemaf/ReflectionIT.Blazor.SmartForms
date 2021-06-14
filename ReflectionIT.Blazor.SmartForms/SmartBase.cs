@@ -64,6 +64,7 @@ namespace ReflectionIT.Blazor.SmartForms {
             }
 
             var expression = (MemberExpression)For.Body;
+
             var range = expression.Member.GetCustomAttribute<RangeAttribute>();
             if (range is not null) {
                 if (range.Minimum is not null && !dict.ContainsKey("min")) {
@@ -79,8 +80,8 @@ namespace ReflectionIT.Blazor.SmartForms {
                 dict["maxlength"] = stringLength.MaximumLength;
             }
 
-            var RequiredAttribute = expression.Member.GetCustomAttribute<RequiredAttribute>();
-            if (RequiredAttribute is not null) {
+            var requiredAttribute = expression.Member.GetCustomAttribute<RequiredAttribute>();
+            if (requiredAttribute is not null) {
                 if (!dict.ContainsKey("required")) {
                     dict["required"] = string.Empty;
                 }
