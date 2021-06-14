@@ -4,6 +4,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace ReflectionIT.Blazor.SmartForms {
 
@@ -49,6 +50,47 @@ namespace ReflectionIT.Blazor.SmartForms {
             return expression.Member.Name ?? string.Empty;
         }
         protected bool IsRow => this.LabelColumnSizeMedium.HasValue || this.LabelColumSizeLarge.HasValue;
+
+        protected override void OnParametersSet() {
+            var dict = this.AdditionalAttributes is null ? new Dictionary<string, object>() : new Dictionary<string, object>(this.AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
+            base.OnParametersSet();
+
+            var type = typeof(TItem);
+            if (IsNumericType(type)) {
+                dict["type"] = "number";
+            }
+            if (type == typeof(DateTime) || type == typeof(DateTime?)) {
+                dict["type"] = "date";
+            }
+
+            var expression = (MemberExpression)For.Body;
+            var range = expression.Member.GetCustomAttribute<RangeAttribute>();
+            if (range is not null) {
+                if (range.Minimum is not null && !dict.ContainsKey("min")) {
+                    dict["min"] = range.Minimum;
+                }
+                if (range.Maximum is not null && !dict.ContainsKey("max")) {
+                    dict["max"] = range.Maximum;
+                }
+            }
+
+            var stringLength = expression.Member.GetCustomAttribute<StringLengthAttribute>();
+            if (stringLength is not null && !dict.ContainsKey("maxlength")) {
+                dict["maxlength"] = stringLength.MaximumLength;
+            }
+
+            var RequiredAttribute = expression.Member.GetCustomAttribute<RequiredAttribute>();
+            if (RequiredAttribute is not null) {
+                if (!dict.ContainsKey("required")) {
+                    dict["required"] = string.Empty;
+                }
+                CssClassRequired ??= "required";
+            }
+
+            if (dict.Count > 0) {
+                this.AdditionalAttributes = dict;
+            }
+        }
 
         /// <summary>
         /// Determines if a type is numeric.  Nullable numeric types are considered numeric.
