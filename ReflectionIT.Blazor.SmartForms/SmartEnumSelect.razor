@@ -1,32 +1,26 @@
 ﻿@typeparam TItem
-@inherits InputBase<TItem>
+@inherits SmartBase<TItem>
 @using System.Linq.Expressions
 @using System.Reflection
 @using System.ComponentModel.DataAnnotations
 
 <div class="form-group @(IsRow ? "row" : null) @CssClassRequired">
-    @if (DisplayLabel)
-    {
+    @if (DisplayLabel) {
         string colCss = string.Empty;
-        if (LabelColumnSizeMedium.HasValue)
-        {
+        if (LabelColumnSizeMedium.HasValue) {
             colCss = "col-md-" + LabelColumnSizeMedium.Value;
         }
-        if (LabelColumSizeLarge.HasValue)
-        {
+        if (LabelColumSizeLarge.HasValue) {
             colCss += " col-lg-" + LabelColumSizeLarge.Value;
         }
         <label class="@CssClassLabel @colCss" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
     }
-    @if (IsRow)
-    {
+    @if (IsRow) {
         string colCss = string.Empty;
-        if (LabelColumnSizeMedium.HasValue)
-        {
+        if (LabelColumnSizeMedium.HasValue) {
             colCss = "col-md-" + (12 - LabelColumnSizeMedium.Value);
         }
-        if (LabelColumSizeLarge.HasValue)
-        {
+        if (LabelColumSizeLarge.HasValue) {
             colCss += " col-lg-" + (12 - LabelColumSizeLarge.Value);
         }
         <div class="@colCss">
@@ -34,20 +28,15 @@
                 GenerateInput();
             }
         </div>
-    }
-    else
-    {
+    } else {
         GenerateInput();
     }
-    @if (DisplayValidationMessage)
-    {
+    @if (DisplayValidationMessage) {
         string colCss = string.Empty;
-        if (LabelColumnSizeMedium.HasValue)
-        {
+        if (LabelColumnSizeMedium.HasValue) {
             colCss = "offset-md-" + LabelColumnSizeMedium.Value + " col-md-" + (12 - LabelColumnSizeMedium.Value);
         }
-        if (LabelColumSizeLarge.HasValue)
-        {
+        if (LabelColumSizeLarge.HasValue) {
             colCss += " offset-lg-" + LabelColumSizeLarge.Value + " col-lg-" + (12 - LabelColumSizeLarge.Value);
         }
         <div class="@CssClassValidation @colCss"><ValidationMessage TValue="@TItem" For="@For" /></div>
@@ -55,23 +44,19 @@
 </div>
 
 @{
-    void GenerateInput()
-    {
+    void GenerateInput() {
         <div class="input-group @EditContext.FieldCssClass(For)">
-            @if (!string.IsNullOrEmpty(Prefix))
-            {
+            @if (!string.IsNullOrEmpty(Prefix)) {
                 <div class="input-group-prepend"><span class="input-group-text">@Prefix</span></div>
             }
             <select class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
                     @bind="@CurrentValue"
                     @attributes="this.AdditionalAttributes">
-                @foreach (var value in Enum.GetValues(typeof(TItem)))
-                {
+                @foreach (var value in Enum.GetValues(typeof(TItem))) {
                     <option>@value</option>
                 }
             </select>
-            @if (!string.IsNullOrEmpty(Suffix))
-            {
+            @if (!string.IsNullOrEmpty(Suffix)) {
                 <div class="input-group-append"><span class="input-group-text">@Suffix</span></div>
             }
         </div>
@@ -79,141 +64,48 @@
 }
 
 @code {
-    [Parameter] public int? LabelColumnSizeMedium { get; set; }
-    [Parameter] public int? LabelColumSizeLarge { get; set; }
 
-    [Parameter] public string CssClassLabel { get; set; } = "form-control-label";
-    [Parameter] public string CssClassInput { get; set; } = "form-control";
-    [Parameter] public string CssClassValidation { get; set; } = "form-control-validation";
-    [Parameter] public string CssClassRequired { get; set; }
-
-    [Parameter] public bool DisplayLabel { get; set; } = true;
-    [Parameter] public bool DisplayValidationMessage { get; set; } = true;
-
-    [Parameter] public string Id { get; set; }
-    [Parameter] public Expression<Func<TItem>> For { get; set; }
-    [Parameter] public string Prefix { get; set; }
-    [Parameter] public string Suffix { get; set; }
-
-    protected override void OnParametersSet()
-    {
+    protected override void OnParametersSet() {
 
         var dict = this.AdditionalAttributes is null ? new Dictionary<string, object>() : new Dictionary<string, object>(this.AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
         base.OnParametersSet();
 
         var type = typeof(TItem);
-        if (IsNumericType(type))
-        {
+        if (IsNumericType(type)) {
             dict["type"] = "number";
         }
-        if (type == typeof(DateTime) || type == typeof(DateTime?))
-        {
+        if (type == typeof(DateTime) || type == typeof(DateTime?)) {
             dict["type"] = "date";
         }
 
         var expression = (MemberExpression)For.Body;
         var range = expression.Member.GetCustomAttribute<RangeAttribute>();
-        if (range is not null)
-        {
-            if (range.Minimum is not null && !dict.ContainsKey("min"))
-            {
+        if (range is not null) {
+            if (range.Minimum is not null && !dict.ContainsKey("min")) {
                 dict["min"] = range.Minimum;
             }
-            if (range.Maximum is not null && !dict.ContainsKey("max"))
-            {
+            if (range.Maximum is not null && !dict.ContainsKey("max")) {
                 dict["max"] = range.Maximum;
             }
         }
 
         var stringLength = expression.Member.GetCustomAttribute<StringLengthAttribute>();
-        if (stringLength is not null && !dict.ContainsKey("maxlength"))
-        {
+        if (stringLength is not null && !dict.ContainsKey("maxlength")) {
             dict["maxlength"] = stringLength.MaximumLength;
         }
 
         var RequiredAttribute = expression.Member.GetCustomAttribute<RequiredAttribute>();
-        if (RequiredAttribute is not null)
-        {
-            if (!dict.ContainsKey("required"))
-            {
+        if (RequiredAttribute is not null) {
+            if (!dict.ContainsKey("required")) {
                 dict["required"] = string.Empty;
             }
             CssClassRequired ??= "required";
         }
 
-        if (dict.Count > 0)
-        {
+        if (dict.Count > 0) {
             this.AdditionalAttributes = dict;
         }
     }
-
-    protected override bool TryParseValueFromString(string value, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TItem result, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string validationErrorMessage)
-    {
-        // Let's Blazor convert the value for us
-        if (BindConverter.TryConvertTo(value, System.Globalization.CultureInfo.CurrentCulture, out TItem parsedValue))
-        {
-            result = parsedValue;
-            validationErrorMessage = null;
-            return true;
-        }
-
-        result = default;
-        validationErrorMessage = $"The {FieldIdentifier.FieldName} field is not valid.";
-        return false;
-    }
-
-    protected string GetDisplayName()
-    {
-        var expression = (MemberExpression)For.Body;
-        var value = expression.Member.GetCustomAttribute<DisplayAttribute>();
-        return value?.Name ?? expression.Member.Name ?? string.Empty;
-    }
-
-    protected string GetId()
-    {
-        var expression = (MemberExpression)For.Body;
-        return expression.Member.Name ?? string.Empty;
-    }
-
-    protected bool IsRow => this.LabelColumnSizeMedium.HasValue || this.LabelColumSizeLarge.HasValue;
-
-
-    /// <summary>
-    /// Determines if a type is numeric.  Nullable numeric types are considered numeric.
-    /// </summary>
-    /// <remarks>
-    /// Boolean is not considered numeric.
-    /// </remarks>
-    public static bool IsNumericType(Type type)
-    {
-        if (type == null)
-        {
-            return false;
-        }
-        switch (Type.GetTypeCode(type))
-        {
-            case TypeCode.Byte:
-            case TypeCode.Decimal:
-            case TypeCode.Double:
-            case TypeCode.Int16:
-            case TypeCode.Int32:
-            case TypeCode.Int64:
-            case TypeCode.SByte:
-            case TypeCode.Single:
-            case TypeCode.UInt16:
-            case TypeCode.UInt32:
-            case TypeCode.UInt64:
-                return true;
-            case TypeCode.Object:
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    return IsNumericType(Nullable.GetUnderlyingType(type));
-                }
-                return false;
-        }
-        return false;
-    }
-
 }
 
 
