@@ -5,17 +5,26 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ReflectionIT.Blazor.SmartForms {
 
-    public abstract class SmartBase<TItem> : InputBase<TItem> {
+    partial class SmartInput<TItem> : InputBase<TItem> {
+
+        private const string DefaultCssClassForm = "form-group";
+        private const string DefaultCssClassLabel = "form-control-label";
+        private const string DefaultCssClassInput = "form-control";
+        private const string DefaultCssClassValidation = "form-control-validation";
+        private const string DefaultCssClassRequired = "required";
 
         [Parameter] public int? LabelColumnSizeMedium { get; set; }
         [Parameter] public int? LabelColumSizeLarge { get; set; }
 
-        [Parameter] public string CssClassLabel { get; set; } = "form-control-label";
-        [Parameter] public string CssClassInput { get; set; } = "form-control";
-        [Parameter] public string CssClassValidation { get; set; } = "form-control-validation";
+        [Parameter] public string CssClassForm { get; set; } = DefaultCssClassForm;
+        [Parameter] public string CssClassLabel { get; set; } = DefaultCssClassLabel;
+        [Parameter] public string CssClassInput { get; set; } = DefaultCssClassInput;
+        [Parameter] public string CssClassValidation { get; set; } = DefaultCssClassValidation;
         [Parameter] public string CssClassRequired { get; set; }
 
         [Parameter] public bool DisplayLabel { get; set; } = true;
@@ -26,7 +35,10 @@ namespace ReflectionIT.Blazor.SmartForms {
         [Parameter] public string Prefix { get; set; }
         [Parameter] public string Suffix { get; set; }
 
+        protected bool IsCheckbox { get; set; }
+
         protected override bool TryParseValueFromString(string value, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TItem result, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string validationErrorMessage) {
+            Console.WriteLine($"TryParseValueFromString {value}");
             // Let's Blazor convert the value for us
             if (BindConverter.TryConvertTo(value, System.Globalization.CultureInfo.CurrentCulture, out TItem parsedValue)) {
                 result = parsedValue;
@@ -45,15 +57,29 @@ namespace ReflectionIT.Blazor.SmartForms {
             return value?.Name ?? expression.Member.Name ?? string.Empty;
         }
 
+        protected string GetDisplayName(object value) {
+            // Read the Display attribute name
+            var member = value.GetType().GetMember(value.ToString())[0];
+            var displayAttribute = member.GetCustomAttribute<DisplayAttribute>();
+            return displayAttribute is not null ? displayAttribute.GetName() : value.ToString();
+        }
+
         protected string GetId() {
             var expression = (MemberExpression)For.Body;
             return expression.Member.Name ?? string.Empty;
         }
         protected bool IsRow => this.LabelColumnSizeMedium.HasValue || this.LabelColumSizeLarge.HasValue;
 
+        private bool _x;
+
         protected override void OnParametersSet() {
             var dict = this.AdditionalAttributes is null ? new Dictionary<string, object>() : new Dictionary<string, object>(this.AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
             base.OnParametersSet();
+
+            if (_x) {
+                return;
+            }
+            _x = true;
 
             var type = typeof(TItem);
             if (IsNumericType(type)) {
@@ -61,6 +87,15 @@ namespace ReflectionIT.Blazor.SmartForms {
             }
             if (type == typeof(DateTime) || type == typeof(DateTime?)) {
                 dict["type"] = "date";
+            }
+            if (type == typeof(bool)) {
+                IsCheckbox = true;
+                if (CssClassInput == DefaultCssClassInput) {
+                    CssClassInput = "form-check-input";
+                }
+                if (CssClassLabel == DefaultCssClassLabel) {
+                    CssClassLabel = "form-check-label";
+                }
             }
 
             var expression = (MemberExpression)For.Body;
@@ -81,11 +116,11 @@ namespace ReflectionIT.Blazor.SmartForms {
             }
 
             var requiredAttribute = expression.Member.GetCustomAttribute<RequiredAttribute>();
-            if (requiredAttribute is not null) {
-                if (!dict.ContainsKey("required")) {
-                    dict["required"] = string.Empty;
+            if (requiredAttribute is not null || (type.IsValueType && !(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))) {
+                if (!dict.ContainsKey(DefaultCssClassRequired)) {
+                    dict[DefaultCssClassRequired] = string.Empty;
                 }
-                CssClassRequired ??= "required";
+                CssClassRequired ??= DefaultCssClassRequired;
             }
 
             if (dict.Count > 0) {
@@ -124,6 +159,31 @@ namespace ReflectionIT.Blazor.SmartForms {
             }
             return false;
         }
-        
+
+        //public override async Task SetParametersAsync(ParameterView parameters) {
+        //    Dictionary<string, object> newAdditionalAttributes;
+
+        //    await base.SetParametersAsync(parameters);
+        //    if (EditContext.GetValidationMessages(FieldIdentifier).Any()) {
+
+        //        //parameters.re
+        //        // Copy the existing attributes to the new, writeable dictionary
+        //        newAdditionalAttributes = new Dictionary<string, object>();
+        //        if (AdditionalAttributes != null) {
+        //            foreach (KeyValuePair<string, object> attribute in AdditionalAttributes) {
+        //                Console.WriteLine(attribute.Key);
+        //                if (attribute.Key != "valid") {
+        //                    newAdditionalAttributes.Add(attribute.Key, attribute.Value);
+        //                }
+        //            }
+        //        }
+
+        //        // Set the invalid attribute we were here to manipulate
+        //        newAdditionalAttributes["aria-invalid"] = true;
+
+        //        // Assign the new list of attributes back to the underlying property
+        //        AdditionalAttributes = newAdditionalAttributes;
+        //    }
+        //}
     }
 }

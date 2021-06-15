@@ -3,7 +3,7 @@
 
 <h1>Product</h1>
 
-<EditForm Model="@product" TItem="Product" OnValidSubmit="HandleValidSubmit"
+<EditForm Model="@product" TItem="Product" OnSubmit="HandleValidSubmit"
           novalidate>
 
     <DataAnnotationsValidator />
@@ -27,12 +27,25 @@
                 DisplayValidationMessage="false"
                 @bind-Value="product.UnitsInStock" />
 
-    <SmartEnumSelect For="(() => product.Status)"
-                     LabelColumnSizeMedium="4"
-                     LabelColumSizeLarge="3"
-                     @bind-Value="product.Status" />
+    <SmartInput For="(() => product.Status)"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                @bind-Value="product.Status" />
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <SmartInput For="(() => product.IsOrderable)"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                @bind-Value="product.IsOrderable" />
+
+    <SmartInput For="(() => product.IntroductionDate)"
+                LabelColumnSizeMedium="4"
+                LabelColumSizeLarge="3"
+                @bind-Value="product.IntroductionDate" />
+
+    <InputDate @bind-Value="product.IntroductionDate" />
+
+
+    <button type="submit" class="btn btn-primary">Save</button>
 </EditForm>
 
 <h3>@text</h3>
@@ -41,8 +54,7 @@
     private Product product = new();
     private string text;
 
-    private void HandleValidSubmit(EditContext editContext)
-    {
-        text = $"Product Name: {product.Name} UnitPrice: {product.UnitPrice:C} UnitsInStock: {product.UnitsInStock}";
+    private void HandleValidSubmit(EditContext editContext) {
+        text = product.ToString();
     }
 }

@@ -1,9 +1,7 @@
 ﻿@typeparam TItem
-@inherits SmartBase<TItem>
-@using System.Linq.Expressions
-@using System.Reflection
-@using System.ComponentModel.DataAnnotations
-<div class="form-group @(IsRow ? "row" : null) @CssClassRequired">
+@inherits InputBase<TItem>
+
+<div class="@CssClassForm @(IsRow ? "row" : null) @CssClassRequired">
     @if (DisplayLabel) {
         string colCss = string.Empty;
         if (LabelColumnSizeMedium.HasValue) {
@@ -12,7 +10,11 @@
         if (LabelColumSizeLarge.HasValue) {
             colCss += " col-lg-" + LabelColumSizeLarge.Value;
         }
-        <label class="@CssClassLabel @colCss" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
+        if (IsCheckbox) {
+            <div class="@colCss"></div>
+        } else {
+            <label class="@CssClassLabel @colCss" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
+        }
     }
     @if (IsRow) {
         string colCss = string.Empty;
@@ -24,11 +26,11 @@
         }
         <div class="@colCss">
             @{
-                GenerateInput();
+                Generate();
             }
         </div>
     } else {
-        GenerateInput();
+        Generate();
     }
     @if (DisplayValidationMessage) {
         string colCss = string.Empty;
@@ -43,6 +45,19 @@
 </div>
 
 @{
+    void Generate() {
+        var type = typeof(TItem);
+        @if (type.IsEnum) {
+            GenerateEnumSelect();
+        } else if (IsCheckbox) {
+            GenerateCheckbox();
+        } else if (type == typeof(DateTime)) {
+            GenerateInputDate();
+        } else {
+            GenerateInput();
+        }
+    }
+
     void GenerateInput() {
         <div class="input-group @EditContext.FieldCssClass(For)">
             @if (!string.IsNullOrEmpty(Prefix)) {
@@ -55,6 +70,50 @@
                 <div class="input-group-append"><span class="input-group-text">@Suffix</span></div>
             }
         </div>
+    }
+
+    void GenerateInputDate() {
+        <div class="input-group">
+            @if (!string.IsNullOrEmpty(Prefix)) {
+                <div class="input-group-prepend"><span class="input-group-text">@Prefix</span></div>
+            }
+            <InputDate id="@(Id ?? GetId())"
+                TValue="@TItem"
+                @bind-Value="@CurrentValue" />
+
+            @*<input class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+                   @bind-value="@CurrentValue"
+                   @attributes="this.AdditionalAttributes" />*@
+
+            @if (!string.IsNullOrEmpty(Suffix)) {
+                <div class="input-group-append"><span class="input-group-text">@Suffix</span></div>
+            }
+        </div>
+    }
+
+    void GenerateCheckbox() {
+        <div class="form-check">
+            <input class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+                   type="checkbox"
+                   @bind="@CurrentValue"
+                   @attributes="this.AdditionalAttributes" />
+            <label class="@CssClassLabel" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
+        </div>
+    }
+
+    //void Test2(ChangeEventArgs e) {
+    //    var d = (DateTime?)e.Value;
+    //    Console.WriteLine(d);
+    //}
+
+    void GenerateEnumSelect() {
+        <select class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+                @bind="@CurrentValue"
+                @attributes="this.AdditionalAttributes">
+            @foreach (var value in Enum.GetValues(typeof(TItem))) {
+                <option value="@value">@GetDisplayName(value)</option>
+            }
+        </select>
     }
 }
 

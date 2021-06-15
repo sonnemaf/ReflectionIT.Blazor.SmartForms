@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SampleApp.Models
 {
-    public class Product
+    public record Product
     {
 
         [Required]
@@ -20,6 +20,12 @@ namespace SampleApp.Models
         public int UnitsInStock { get; set; }
 
         public Status Status { get; set; }
+        
+        public bool IsOrderable { get; set; }
+
+        [Required]
+        [Range(typeof(DateTime), "1/1/2011", "1/1/2012", ErrorMessage = "Date is out of Range")]
+        public DateTime IntroductionDate { get; set; } = DateTime.Today;
     }
 
     public enum Status
@@ -27,6 +33,8 @@ namespace SampleApp.Models
         None,
         Normal,
         Special,
-        Depricated
+
+        [Display(Name = "Depricated !!!")]
+        Depricated = 99
     }
 }
