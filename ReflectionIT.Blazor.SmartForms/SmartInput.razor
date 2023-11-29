@@ -1,7 +1,7 @@
 ﻿@typeparam TItem
 @inherits InputBase<TItem>
 
-<div class="@CssClassForm @(IsRow ? "row" : null) @CssClassRequired">
+<div class="@CssClassDiv @(IsRow ? "row" : null) @CssClassRequired">
     @if (DisplayLabel) {
         string colCss = string.Empty;
         if (LabelColumnSizeMedium.HasValue) {
@@ -11,9 +11,11 @@
             colCss += " col-lg-" + LabelColumSizeLarge.Value;
         }
         if (IsCheckbox) {
-            <div class="@colCss"></div>
+            if (!string.IsNullOrEmpty(colCss)) {
+                <div class="@colCss"></div>
+            }
         } else {
-            <label class="@CssClassLabel @colCss" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
+            <label class="@CssClassLabel @colCss" for="@(Id ?? GetId())">@GetDisplayName()</label>
         }
     }
     @if (IsRow) {
@@ -33,14 +35,14 @@
         Generate();
     }
     @if (DisplayValidationMessage) {
-        string colCss = string.Empty;
+        string colCss = CssClassValidation;
         if (LabelColumnSizeMedium.HasValue) {
-            colCss = "offset-md-" + LabelColumnSizeMedium.Value + " col-md-" + (12 - LabelColumnSizeMedium.Value);
+            colCss += " offset-md-" + LabelColumnSizeMedium.Value + " col-md-" + (12 - LabelColumnSizeMedium.Value);
         }
         if (LabelColumSizeLarge.HasValue) {
             colCss += " offset-lg-" + LabelColumSizeLarge.Value + " col-lg-" + (12 - LabelColumSizeLarge.Value);
         }
-        <div class="@CssClassValidation @colCss"><ValidationMessage TValue="@TItem" For="@For" /></div>
+        <ValidationMessage class="@colCss" TValue="@TItem" For="ValueExpression" />
     }
 </div>
 
@@ -51,7 +53,7 @@
             GenerateEnumSelect();
         } else if (IsCheckbox) {
             GenerateCheckbox();
-        } else if (type == typeof(DateTime)) {
+        } else if (IsDate) {
             GenerateInputDate();
         } else {
             GenerateInput();
@@ -59,13 +61,17 @@
     }
 
     void GenerateInput() {
-        <div class="input-group @EditContext.FieldCssClass(For)">
+        <div class="input-group @EditContext.FieldCssClass(ValueExpression)">
             @if (!string.IsNullOrEmpty(Prefix)) {
                 <div class="input-group-prepend"><span class="input-group-text">@Prefix</span></div>
             }
-            <input class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+
+            <input class="@CssClassInput @CssClass"
+                   id="@(Id ?? GetId())"
+                   name="@this.NameAttributeValue"
                    @bind="@CurrentValue"
                    @attributes="this.AdditionalAttributes" />
+
             @if (!string.IsNullOrEmpty(Suffix)) {
                 <div class="input-group-append"><span class="input-group-text">@Suffix</span></div>
             }
@@ -73,18 +79,17 @@
     }
 
     void GenerateInputDate() {
+        var css = CssClassInput + " " + CssClass;
         <div class="input-group">
             @if (!string.IsNullOrEmpty(Prefix)) {
                 <div class="input-group-prepend"><span class="input-group-text">@Prefix</span></div>
             }
             <InputDate id="@(Id ?? GetId())"
-                TValue="@TItem"
-                @bind-Value="@CurrentValue" />
-
-            @*<input class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
-                   @bind-value="@CurrentValue"
-                   @attributes="this.AdditionalAttributes" />*@
-
+                       class="@css"
+                       TValue="@TItem"
+                       @bind-Value="@CurrentValue"
+                       name="@this.NameAttributeValue"
+                       @attributes="this.AdditionalAttributes" />
             @if (!string.IsNullOrEmpty(Suffix)) {
                 <div class="input-group-append"><span class="input-group-text">@Suffix</span></div>
             }
@@ -94,20 +99,18 @@
     void GenerateCheckbox() {
         <div class="form-check">
             <input class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+                   name="@this.NameAttributeValue"
                    type="checkbox"
+                   value="True"
                    @bind="@CurrentValue"
                    @attributes="this.AdditionalAttributes" />
-            <label class="@CssClassLabel" for="@(Id ?? GetId())">@(DisplayName ?? GetDisplayName())</label>
+            <label class="@CssClassLabel" for="@(Id ?? GetId())">@GetDisplayName()</label>
         </div>
     }
 
-    //void Test2(ChangeEventArgs e) {
-    //    var d = (DateTime?)e.Value;
-    //    Console.WriteLine(d);
-    //}
-
     void GenerateEnumSelect() {
         <select class="@CssClassInput @CssClass" id="@(Id ?? GetId())"
+                name="@this.NameAttributeValue"
                 @bind="@CurrentValue"
                 @attributes="this.AdditionalAttributes">
             @foreach (var value in Enum.GetValues(typeof(TItem))) {

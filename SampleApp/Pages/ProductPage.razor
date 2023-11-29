@@ -10,11 +10,13 @@
 
     <SmartInput For="(() => product.Name)"
                 LabelColumnSizeMedium="4"
+                CssClassDiv="mb-3"
                 LabelColumSizeLarge="3"
                 @bind-Value="product.Name"
                 placeholder="Enter the name" />
 
     <SmartInput Id="up"
+                CssClassDiv="mb-3"
                 Prefix="$"
                 LabelColumnSizeMedium="4"
                 LabelColumSizeLarge="3"
@@ -22,6 +24,7 @@
                 @bind-Value="product.UnitPrice" />
 
     <SmartInput For="(() => product.UnitsInStock)"
+                CssClassDiv="mb-3"
                 LabelColumnSizeMedium="4"
                 LabelColumSizeLarge="3"
                 DisplayValidationMessage="false"
@@ -29,21 +32,21 @@
 
     <SmartInput For="(() => product.Status)"
                 LabelColumnSizeMedium="4"
+                CssClassDiv="mb-3"
                 LabelColumSizeLarge="3"
                 @bind-Value="product.Status" />
 
     <SmartInput For="(() => product.IsOrderable)"
+                CssClassDiv="mb-3"
                 LabelColumnSizeMedium="4"
                 LabelColumSizeLarge="3"
                 @bind-Value="product.IsOrderable" />
 
     <SmartInput For="(() => product.IntroductionDate)"
+                CssClassDiv="mb-3"
                 LabelColumnSizeMedium="4"
                 LabelColumSizeLarge="3"
                 @bind-Value="product.IntroductionDate" />
-
-    <InputDate @bind-Value="product.IntroductionDate" />
-
 
     <button type="submit" class="btn btn-primary">Save</button>
 </EditForm>

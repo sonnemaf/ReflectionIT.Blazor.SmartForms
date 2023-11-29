@@ -6,42 +6,43 @@ using System.Reflection;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReflectionIT.Blazor.SmartForms {
 
     partial class SmartInput<TItem> : InputBase<TItem> {
 
-        private const string DefaultCssClassForm = "form-group";
-        private const string DefaultCssClassLabel = "form-control-label";
+        private const string DefaultCssClassDiv = "";
+        private const string DefaultCssClassLabel = "form-label";
         private const string DefaultCssClassInput = "form-control";
-        private const string DefaultCssClassValidation = "form-control-validation";
+        private const string DefaultCssClassValidation = "text-danger";
         private const string DefaultCssClassRequired = "required";
 
         [Parameter] public int? LabelColumnSizeMedium { get; set; }
         [Parameter] public int? LabelColumSizeLarge { get; set; }
 
-        [Parameter] public string CssClassForm { get; set; } = DefaultCssClassForm;
+        [Parameter] public string CssClassDiv { get; set; } = DefaultCssClassDiv;
         [Parameter] public string CssClassLabel { get; set; } = DefaultCssClassLabel;
         [Parameter] public string CssClassInput { get; set; } = DefaultCssClassInput;
         [Parameter] public string CssClassValidation { get; set; } = DefaultCssClassValidation;
-        [Parameter] public string CssClassRequired { get; set; }
+        [Parameter] public string? CssClassRequired { get; set; }
 
         [Parameter] public bool DisplayLabel { get; set; } = true;
         [Parameter] public bool DisplayValidationMessage { get; set; } = true;
 
-        [Parameter] public string Id { get; set; }
-        [Parameter] public Expression<Func<TItem>> For { get; set; }
-        [Parameter] public string Prefix { get; set; }
-        [Parameter] public string Suffix { get; set; }
+        [Parameter] public string? Id { get; set; }
+        [Parameter] public string? Prefix { get; set; }
+        [Parameter] public string? Suffix { get; set; }
 
-        protected bool IsCheckbox { get; set; }
+        protected bool IsCheckbox { get; private set; }
 
-        protected override bool TryParseValueFromString(string value, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TItem result, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string validationErrorMessage) {
-            Console.WriteLine($"TryParseValueFromString {value}");
+        protected bool IsDate { get; private set; }
+
+        protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out TItem result, [NotNullWhen(false)] out string? validationErrorMessage) {
+            // Debug.WriteLine($"TryParseValueFromString {value}");
             // Let's Blazor convert the value for us
-            if (BindConverter.TryConvertTo(value, System.Globalization.CultureInfo.CurrentCulture, out TItem parsedValue)) {
-                result = parsedValue;
+            if (BindConverter.TryConvertTo(value, System.Globalization.CultureInfo.CurrentCulture, out TItem? parsedValue)) {
+                result = parsedValue!;
                 validationErrorMessage = null;
                 return true;
             }
@@ -50,43 +51,43 @@ namespace ReflectionIT.Blazor.SmartForms {
             validationErrorMessage = $"The {FieldIdentifier.FieldName} field is not valid.";
             return false;
         }
-
         protected string GetDisplayName() {
-            var expression = (MemberExpression)For.Body;
-            var value = expression.Member.GetCustomAttribute<DisplayAttribute>();
-            return value?.Name ?? expression.Member.Name ?? string.Empty;
+            if (!string.IsNullOrEmpty(DisplayName)) {
+                return DisplayName;
+            }
+            var expression = (MemberExpression?)ValueExpression?.Body;
+            var value = expression?.Member.GetCustomAttribute<DisplayAttribute>();
+            return value?.Name ?? expression?.Member.Name ?? string.Empty;
         }
 
-        protected string GetDisplayName(object value) {
+        protected string? GetDisplayName(object value) {
             // Read the Display attribute name
-            var member = value.GetType().GetMember(value.ToString())[0];
-            var displayAttribute = member.GetCustomAttribute<DisplayAttribute>();
+            var member = value.GetType().GetMember(value.ToString()!).ElementAtOrDefault(0);
+            var displayAttribute = member?.GetCustomAttribute<DisplayAttribute>();
             return displayAttribute is not null ? displayAttribute.GetName() : value.ToString();
         }
 
         protected string GetId() {
-            var expression = (MemberExpression)For.Body;
-            return expression.Member.Name ?? string.Empty;
+            var expression = (MemberExpression?)ValueExpression?.Body;
+            return (expression?.Member.Name ?? string.Empty).ToLower();
         }
-        protected bool IsRow => this.LabelColumnSizeMedium.HasValue || this.LabelColumSizeLarge.HasValue;
 
-        private bool _x;
+        protected bool IsRow => this.LabelColumnSizeMedium.HasValue || this.LabelColumSizeLarge.HasValue;
 
         protected override void OnParametersSet() {
             var dict = this.AdditionalAttributes is null ? new Dictionary<string, object>() : new Dictionary<string, object>(this.AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
             base.OnParametersSet();
 
-            if (_x) {
+            if (ValueExpression is null) {
                 return;
             }
-            _x = true;
 
             var type = typeof(TItem);
             if (IsNumericType(type)) {
                 dict["type"] = "number";
             }
-            if (type == typeof(DateTime) || type == typeof(DateTime?)) {
-                dict["type"] = "date";
+            if (type == typeof(DateTime) || type == typeof(DateTime?) || type == typeof(DateOnly) || type == typeof(DateOnly?)) {
+                IsDate = true;
             }
             if (type == typeof(bool)) {
                 IsCheckbox = true;
@@ -98,7 +99,13 @@ namespace ReflectionIT.Blazor.SmartForms {
                 }
             }
 
-            var expression = (MemberExpression)For.Body;
+            if (type.IsEnum) {
+                if (CssClassInput == DefaultCssClassInput) {
+                    CssClassInput = "form-select";
+                }
+            }
+
+            var expression = (MemberExpression)ValueExpression.Body;
 
             var range = expression.Member.GetCustomAttribute<RangeAttribute>();
             if (range is not null) {
@@ -153,37 +160,11 @@ namespace ReflectionIT.Blazor.SmartForms {
                     return true;
                 case TypeCode.Object:
                     if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
-                        return IsNumericType(Nullable.GetUnderlyingType(type));
+                        return IsNumericType(Nullable.GetUnderlyingType(type)!);
                     }
                     return false;
             }
             return false;
         }
-
-        //public override async Task SetParametersAsync(ParameterView parameters) {
-        //    Dictionary<string, object> newAdditionalAttributes;
-
-        //    await base.SetParametersAsync(parameters);
-        //    if (EditContext.GetValidationMessages(FieldIdentifier).Any()) {
-
-        //        //parameters.re
-        //        // Copy the existing attributes to the new, writeable dictionary
-        //        newAdditionalAttributes = new Dictionary<string, object>();
-        //        if (AdditionalAttributes != null) {
-        //            foreach (KeyValuePair<string, object> attribute in AdditionalAttributes) {
-        //                Console.WriteLine(attribute.Key);
-        //                if (attribute.Key != "valid") {
-        //                    newAdditionalAttributes.Add(attribute.Key, attribute.Value);
-        //                }
-        //            }
-        //        }
-
-        //        // Set the invalid attribute we were here to manipulate
-        //        newAdditionalAttributes["aria-invalid"] = true;
-
-        //        // Assign the new list of attributes back to the underlying property
-        //        AdditionalAttributes = newAdditionalAttributes;
-        //    }
-        //}
     }
 }
