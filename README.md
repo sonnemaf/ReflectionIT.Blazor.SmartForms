@@ -1,5 +1,5 @@
 # ReflectionIT.Blazor.SmartForms
-Blazor components for Smart Forms using Bootstrap and DataAnnotations
+Blazor components for Smart Forms using Bootstrap 
 
 ## <a id="features">What's in the box</a>
 Information on what's contained within this package will be coming soon. Please check back later.
